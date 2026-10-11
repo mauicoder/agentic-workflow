@@ -1,6 +1,6 @@
 # Antigravity CLI (agy) TDD Multi-Agent Orchestrator Template
 
-This repository serves as a centralized template for orchestrating multi-agent, test-driven development (TDD) workflows using the Antigravity CLI (`agy`). It provides a standardized framework to transition from high-level feature requirements to structured PRDs, dependency task graphs, and isolated, contract-first subagent executions.
+This repository serves as a centralized template for orchestrating multi-agent, test-driven development (TDD) workflows using the Antigravity CLI (`agy`) combined with modular engineering skills inspired by [Matt Pocock's skills repository](https://github.com/mattpocock/skills). It provides a standardized framework to transition from high-level feature requirements to structured specs, ticket graphs, parallel TDD execution, and automated code reviews.
 
 ## 🚀 Quick Bootstrap (One-Liner)
 
@@ -10,57 +10,63 @@ Instead of cloning or manually copying files, you can instantly bootstrap this w
 curl -sSL https://raw.githubusercontent.com/mauicoder/agentic-workflow/main/setup.sh | bash
 ```
 
-This will automatically fetch and configure the required `.agy/workflow.yaml` and agent skills directly in your project workspace.
-
----
+This will automatically fetch and configure the required `.agy/` configuration and static skill folders directly in your project workspace—**no Node.js or npm required**.
 
 ## Repository Structure
 
 ```text
 .
 ├── .agy/
-│   └── workflow.yaml          # Default orchestration configuration & TDD rules
+│   └── workflow.yaml          # Orchestration configuration & TDD guidelines
 ├── skills/
-│   └── agy-tdd-orchestrator/
-│       └── SKILL.md           # Reusable agent skill definition
+│   ├── agy-tdd-orchestrator/  # Core orchestration wrapper
+│   ├── to-spec/               # Skill: Synthesize specs from discussions
+│   ├── to-ticket/             # Skill: Break specs down into dependent tickets
+│   └── implement-spec/        # Skill: Parallel TDD execution (Red-Green-Refactor)
 ├── setup.sh                   # Remote bootstrap script
 └── README.md                  # Setup and usage guide
 ```
 
-## How to Use the Workflow
+## 📋 The Complete End-to-End Workflow
 
-### 1. Step 1: Requirements Gathering (`/grill-me`)
-
-Open your terminal in the root of your project workspace and launch `agy`:
+Open your terminal in the root of your project workspace and launch `agy`, then execute the following command pipeline:
 
 ```bash
-agy
-```
+$ agy
 
-Run the interactive refinement command with your high-level feature idea, bug, or system goal:
-
-```bash
+# 1. Refine requirements interactively
 /grill-me [your sketched idea, feature description, or bug report]
+
+# 2. Transform the discussion into a formal specification
+/to-spec
+
+# 3. Slice the spec into structured, dependent tracer-bullet tickets
+/to-ticket
+
+# 4. Clear context to give subagents a fresh, clean execution state
+/clear
+
+# 5. Execute parallel TDD implementation (Red-Green-Refactor cycle)
+/implement-spec
+
+# 6. Run automated code review and feedback loops
+/code-review
 ```
 
-The orchestrator will prompt you to flesh out edge cases, constraints, and acceptance criteria.
+### Key Lifecycle Phases
 
-### 2. Step 2: Artifact Synthesis (PRD & Tasks)
+1. **Requirements & Specs (`/grill-me` & `/to-spec`):** Fleshes out edge cases, acceptance criteria, and domain boundaries without polluting your active context.
+2. **Ticket Slicing (`/to-ticket`):** Automatically maps out dependency trees and blocking edges so subagents know what contracts must be built first.
+3. **TDD Implementation (`/implement-spec`):** Enforces a strict **Red-Green-Refactor** lifecycle:
+   - **Red:** Subagents write failing unit/integration tests against interface contracts.
+   - **Green:** Minimum production code is written to make tests pass.
+   - **Refactor:** Code is cleaned up, duplication removed, and tests verified green.
+4. **Code Review (`/code-review`):** Evaluates implementation diffs against the original specification to catch smells, edge cases, or contract drift.
 
-Once the requirements session is complete, instruct the orchestrator to synthesize everything into documentation and a task dependency graph:
+## 🙏 Acknowledgments & Credits
 
-```bash
-/goal "Synthesize our discussion into docs/PRD.md and generate tasks.json with explicit dependency mappings and interface contracts first."
-```
-
-### 3. Step 3: TDD Subagent Execution
-
-Pass the generated task graph back into `agy` to dispatch specialized subagents following a strict Red-Green-Refactor TDD cycle and contract-first boundaries:
-
-```bash
-/goal "Execute tasks.json respecting dependencies. Ensure subagents write failing tests against interface contracts before implementing code."
-```
+Special thanks to **Matt Pocock** for his pioneering work on modular, model-invoked engineering skills (`mattpocock/skills`). This workflow adapts those concepts into a lightweight, shell-native structure compatible with `agy`.
 
 ## Customization
 
-You can modify `.agy/workflow.yaml` per project to adjust execution parameters, max parallel subagents, or specific stack requirements (e.g., Python, Java/Kotlin, or Kubernetes configurations).
+You can modify `.agy/workflow.yaml` per project to adjust execution parameters, max parallel subagents, or specific stack requirements (Python, Java/Kotlin, Kubernetes deployments, etc.).
