@@ -70,3 +70,16 @@ Special thanks to **Matt Pocock** for his pioneering work on modular, model-invo
 ## Customization
 
 You can modify `.agy/workflow.yaml` per project to adjust execution parameters, max parallel subagents, or specific stack requirements (Python, Java/Kotlin, Kubernetes deployments, etc.).
+
+## 🛠️ Troubleshooting
+
+### 1. `Permission Denied` when running `./setup.sh` locally
+If you downloaded the script locally using `curl -O` and try to execute it directly, you may encounter a permission error. Fix this by explicitly running it with `bash` or granting execution permissions:
+```bash
+# Option A: Run directly with bash
+bash setup.sh
+
+# Option B: Make it executable and run normally
+chmod +x setup.sh
+./setup.sh
+
