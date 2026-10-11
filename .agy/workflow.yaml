@@ -1,19 +1,26 @@
 version: "1.0"
 project:
-  name: "tdd-multi-agent-orchestrator"
+  name: "agentic-workflow-orchestrator"
 
-grill_me:
-  enabled: true
-  output_prd: "docs/PRD.md"
-  output_tasks: "tasks.json"
+workflow:
+  steps:
+    - command: "/grill-me"
+      output: "docs/PRD.md"
+    - skill: "to-spec"
+      output: "docs/specs/"
+    - skill: "to-ticket"
+      output: "tasks.json"
+    - skill: "implement-spec"
+      approach: "tdd-red-green-refactor"
+    - skill: "code-review"
 
 orchestration:
   approach: "tdd-contract-first"
   rules:
-    - "Write shared interface contracts (API, types, or protocols) as root dependencies before implementation."
+    - "Write shared interface contracts as root dependencies before implementation."
     - "Strictly enforce Red-Green-Refactor TDD cycle for every subagent task."
     - "Isolate parallel modules using interface stubs or mocks until integration."
-  
+
 subagents:
   max_parallel: 3
   execution_mode: "dependency-graph"
