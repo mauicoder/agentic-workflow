@@ -23,7 +23,7 @@ download_file() {
 download_file "$REPO_RAW_URL/.agy/workflow.yaml" ".agy/workflow.yaml"
 download_file "$REPO_RAW_URL/skills/agy-tdd-orchestrator/SKILL.md" "skills/agy-tdd-orchestrator/SKILL.md"
 download_file "$REPO_RAW_URL/skills/to-spec/SKILL.md" "skills/to-spec/SKILL.md"
-download_file "$REPO_RAW_URL/skills/to-tickets/SKILL.md" "skills/to-ticket/SKILL.md"
+download_file "$REPO_RAW_URL/skills/to-tickets/SKILL.md" "skills/to-tickets/SKILL.md"
 download_file "$REPO_RAW_URL/skills/implement-spec/SKILL.md" "skills/implement-spec/SKILL.md"
 download_file "$REPO_RAW_URL/skills/code-review/SKILL.md" "skills/code-review/SKILL.md"
 
