@@ -6,7 +6,7 @@ REPO_RAW_URL="https://raw.githubusercontent.com/mauicoder/agentic-workflow/main"
 echo "🚀 Initializing agy agentic workflow..."
 
 # 1. Create required directories
-mkdir -p .agy skills/agy-tdd-orchestrator skills/to-spec skills/to-ticket skills/implement-spec docs/specs
+mkdir -p .agy skills/agy-tdd-orchestrator skills/to-spec skills/to-ticket skills/implement-spec skills/code-review docs/specs
 
 # 2. Safe download helper function
 download_file() {
@@ -25,6 +25,7 @@ download_file "$REPO_RAW_URL/skills/agy-tdd-orchestrator/SKILL.md" "skills/agy-t
 download_file "$REPO_RAW_URL/skills/to-spec/SKILL.md" "skills/to-spec/SKILL.md"
 download_file "$REPO_RAW_URL/skills/to-ticket/SKILL.md" "skills/to-ticket/SKILL.md"
 download_file "$REPO_RAW_URL/skills/implement-spec/SKILL.md" "skills/implement-spec/SKILL.md"
+download_file "$REPO_RAW_URL/skills/code-review/SKILL.md" "skills/code-review/SKILL.md"
 
 echo "✨ Setup complete! All orchestration configs and skills are ready."
 
