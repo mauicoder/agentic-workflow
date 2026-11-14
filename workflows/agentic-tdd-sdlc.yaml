@@ -2,22 +2,32 @@ version: "1.0"
 project:
   name: "agentic-workflow-orchestrator"
 
+tracker:
+  mode: "local" # Options: "local", "github", "gitlab", "linear"
+  specs_dir: "docs/specs"
+  tickets_dir: "docs/tickets"
+  default_label: "ready-for-agent"
+
 workflow:
   phases:
     - name: "refinement"
       command: "/grill-me"
-      output: "docs/PRD.md"
+      description: "Interactive requirements interview to resolve design decisions and edge cases."
     - name: "specification"
       skill: "to-spec"
-      output: "docs/specs/"
+      output: "docs/specs/<feature-slug>.md"
     - name: "ticketization"
-      skill: "to-ticket"
-      output: "tasks.json"
+      skill: "to-tickets"
+      output: "docs/tickets/<feature-slug>/<NN>-<ticket-slug>.md"
     - name: "execution"
       skill: "implement-spec"
+      tdd_skill: "tdd"
       approach: "tdd-red-green-refactor"
     - name: "review"
       skill: "code-review"
+      axes:
+        - "standards"
+        - "spec"
 
 orchestration:
   approach: "tdd-contract-first"
@@ -28,5 +38,5 @@ orchestration:
 
 subagents:
   max_parallel: 3
+  workspace_mode: "share"
   execution_mode: "dependency-graph"
-

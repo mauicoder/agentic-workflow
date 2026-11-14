@@ -1,12 +1,21 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
 REPO_RAW_URL="https://raw.githubusercontent.com/mauicoder/agentic-workflow/main"
 
-echo "🚀 Initializing agy agentic workflow..."
+echo "🚀 Initializing agy agentic TDD workflow..."
 
 # 1. Create required directories
-mkdir -p .agy skills/agy-tdd-orchestrator skills/to-spec skills/to-tickets skills/implement-spec skills/code-review docs/specs
+mkdir -p \
+    .agents/workflows \
+    .agents/skills/agy-tdd-orchestrator \
+    .agents/skills/to-spec \
+    .agents/skills/to-tickets \
+    .agents/skills/implement-spec \
+    .agents/skills/tdd \
+    .agents/skills/code-review \
+    docs/specs \
+    docs/tickets
 
 # 2. Safe download helper function
 download_file() {
@@ -19,13 +28,13 @@ download_file() {
     fi
 }
 
-# 3. Pull configurations and skills
-download_file "$REPO_RAW_URL/.agy/workflow.yaml" ".agy/workflow.yaml"
-download_file "$REPO_RAW_URL/skills/agy-tdd-orchestrator/SKILL.md" "skills/agy-tdd-orchestrator/SKILL.md"
-download_file "$REPO_RAW_URL/skills/to-spec/SKILL.md" "skills/to-spec/SKILL.md"
-download_file "$REPO_RAW_URL/skills/to-tickets/SKILL.md" "skills/to-tickets/SKILL.md"
-download_file "$REPO_RAW_URL/skills/implement-spec/SKILL.md" "skills/implement-spec/SKILL.md"
-download_file "$REPO_RAW_URL/skills/code-review/SKILL.md" "skills/code-review/SKILL.md"
+# 3. Pull workflow configuration and skills
+download_file "$REPO_RAW_URL/workflows/agentic-tdd-sdlc.yaml" ".agents/workflows/agentic-tdd-sdlc.yaml"
+download_file "$REPO_RAW_URL/skills/agy-tdd-orchestrator/SKILL.md" ".agents/skills/agy-tdd-orchestrator/SKILL.md"
+download_file "$REPO_RAW_URL/skills/to-spec/SKILL.md" ".agents/skills/to-spec/SKILL.md"
+download_file "$REPO_RAW_URL/skills/to-tickets/SKILL.md" ".agents/skills/to-tickets/SKILL.md"
+download_file "$REPO_RAW_URL/skills/implement-spec/SKILL.md" ".agents/skills/implement-spec/SKILL.md"
+download_file "$REPO_RAW_URL/skills/tdd/SKILL.md" ".agents/skills/tdd/SKILL.md"
+download_file "$REPO_RAW_URL/skills/code-review/SKILL.md" ".agents/skills/code-review/SKILL.md"
 
-echo "✨ Setup complete! All orchestration configs and skills are ready."
-
+echo "✨ Setup complete! All orchestration configs and skills are installed in .agents/"

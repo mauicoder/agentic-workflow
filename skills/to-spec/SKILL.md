@@ -1,24 +1,39 @@
 ---
 name: to-spec
-description: "Turn the current conversation into a spec and publish it to the project issue tracker: no interview, just synthesis of what you've already discussed."
-disable-model-invocation: true
+description: >-
+  Synthesize the current conversation and codebase context into a formal feature
+  specification and save it to docs/specs/<feature-slug>.md (or publish it to the
+  configured issue tracker) without interviewing the user. Use when the user asks
+  to create a spec, run /to-spec, or formalize a refined feature discussion.
 ---
 
-This skill takes the current conversation context and codebase understanding and produces a spec. Do NOT interview the user; just synthesize what you already know.
+# To Spec
 
-The issue tracker and triage label vocabulary should have been provided to you. If not, tell the user to run `/setup-matt-pocock-skills`.
+This skill takes the current conversation context and codebase understanding and produces a formal specification. Do **not** interview the user; synthesize what has already been discussed.
+
+## Tracker & Storage Resolution
+
+Check `.agents/workflows/agentic-tdd-sdlc.yaml` if present, or follow the user's explicit instruction:
+- **Local mode (default):** Write the specification to `docs/specs/<feature-slug>.md`.
+- **External tracker (`github`, `gitlab`, `linear`):** Publish the specification to the project issue tracker and apply the `ready-for-agent` triage label.
 
 ## Process
 
-1. Explore the repo to understand the current state of the codebase, if you haven't already. Use the project's domain glossary vocabulary throughout the spec, and respect any ADRs in the area you're touching.
+1. **Explore the codebase:** If you have not already inspected the relevant modules, explore the repository to understand its current architecture. Use the project's domain glossary vocabulary throughout the spec, and respect any Architecture Decision Records (ADRs) in the area being modified.
 
-2. Sketch out the seams at which you're going to test the feature. Existing seams should be preferred to new ones. Use the highest seam possible. If new seams are needed, propose them at the highest point you can. The fewer seams across the codebase, the better - the ideal number is one.
+2. **Identify testing seams:** Sketch out the seams at which the feature will be tested.
+   - Prefer existing seams over creating new ones.
+   - Choose the highest practical seam (public API, module boundary, or service interface).
+   - Keep the number of seams minimal—ideally one primary seam.
+   - Briefly confirm with the user that these testing seams match their expectations.
 
-Check with the user that these seams match their expectations.
-
-3. Write the spec using the template below, then publish it to the project issue tracker. Apply the `ready-for-agent` triage label - no need for additional triage.
+3. **Write and publish the spec:** Generate the specification using the template below and save it to `docs/specs/<feature-slug>.md` (or publish it to the configured issue tracker with the `ready-for-agent` label).
 
 <spec-template>
+
+# <Feature Title>
+
+**Status:** ready-for-agent
 
 ## Problem Statement
 
@@ -30,46 +45,43 @@ The solution to the problem, from the user's perspective.
 
 ## User Stories
 
-A LONG, numbered list of user stories. Each user story should be in the format of:
+A comprehensive, numbered list of user stories covering all primary flows and edge cases. Each user story must follow the format:
 
-1. As an <actor>, I want a <feature>, so that <benefit>
+1. As an `<actor>`, I want `<feature>`, so that `<benefit>`
 
 <user-story-example>
-1. As a mobile bank customer, I want to see balance on my accounts, so that I can make better informed decisions about my spending
+1. As a mobile bank customer, I want to see the balance on my accounts, so that I can make better-informed decisions about my spending.
 </user-story-example>
-
-This list of user stories should be extremely extensive and cover all aspects of the feature.
 
 ## Implementation Decisions
 
-A list of implementation decisions that were made. This can include:
+A list of architectural and technical decisions made during refinement:
 
-- The modules that will be built/modified
-- The interfaces of those modules that will be modified
-- Technical clarifications from the developer
+- Modules to be built or modified
+- Public interfaces and contracts to be introduced or updated
+- Technical clarifications and domain constraints
 - Architectural decisions
-- Schema changes
-- API contracts
-- Specific interactions
+- Schema or data model changes
+- API contracts and error semantics
+- Specific module interactions
 
-Do NOT include specific file paths or code snippets. They may end up being outdated very quickly.
-
-Exception: if a prototype produced a snippet that encodes a decision more precisely than prose can (state machine, reducer, schema, type shape), inline it within the relevant decision and note briefly that it came from a prototype. Trim to the decision-rich parts, not a working demo, just the important bits.
+Do **not** include brittle file paths or full implementation code snippets that go stale quickly.
+*Exception:* If a prototype or discussion produced a concise snippet that encodes a decision more precisely than prose can (e.g., a state machine, reducer signature, schema, or contract interface), inline only the decision-rich excerpt and note that it came from a prototype.
 
 ## Testing Decisions
 
-A list of testing decisions that were made. Include:
+A list of testing decisions for the TDD phase:
 
-- A description of what makes a good test (only test external behavior, not implementation details)
-- Which modules will be tested
-- Prior art for the tests (i.e. similar types of tests in the codebase)
+- **Testing philosophy:** Test external behavior at the public seam, not internal implementation details.
+- **Target seams/modules:** Which module boundaries or interfaces will be tested.
+- **Prior art:** Existing test patterns or fixtures in the codebase to follow.
 
 ## Out of Scope
 
-A description of the things that are out of scope for this spec.
+Explicit boundaries of what is excluded from this specification.
 
 ## Further Notes
 
-Any further notes about the feature.
+Any additional context, rollout considerations, or open notes.
 
 </spec-template>
