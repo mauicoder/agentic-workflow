@@ -4,22 +4,23 @@ description: >-
   Orchestrate the end-to-end multi-agent TDD software development lifecycle in
   Antigravity (agy): requirements refinement (/grill-me), specification synthesis
   (to-spec), dependency-graphed ticket slicing (to-tickets), parallel TDD execution
-  (implement-spec + tdd), and two-axis verification (code-review). Use when the user
-  wants to run the full TDD workflow or asks how to progress from idea to reviewed code.
+  (implement-spec + tdd), two-axis verification (code-review), and post-run
+  retrospective analysis (retro + writing-for-agents). Use when the user wants to
+  run the full TDD workflow or asks how to progress from idea to reviewed code.
 ---
 
 # Antigravity TDD Multi-Agent Orchestrator
 
-Use this orchestrator skill to guide a feature or bugfix from initial idea through specification, vertical-slice ticketization, parallel Test-Driven Development (TDD), and automated two-axis code review.
+Use this orchestrator skill to guide a feature or bugfix from initial idea through specification, vertical-slice ticketization, parallel Test-Driven Development (TDD), automated two-axis code review, and post-run retrospective improvement.
 
 ## Configuration
 
 If `.agents/workflows/agentic-tdd-sdlc.yaml` exists in the workspace, read it first to honor project-specific settings:
 - **Tracker mode:** `local` (default), `github`, `gitlab`, or `linear`
-- **Local paths:** `docs/specs/` for specifications and `docs/tickets/` for ticket graphs
+- **Local paths:** `docs/specs/` for specifications, `docs/tickets/` for ticket graphs, and `docs/retros/` for retrospective reports
 - **Concurrency:** `subagents.max_parallel` (default: `3`) and `subagents.workspace_mode` (default: `share`)
 - **Multi-Model Phase Allocation:**
-  - **Architecture, Spec-Generation, and Final Orchestrator/Merge Phases:** `"Gemini 4 Argon"` (`models.architecture`, `models.specification`, `models.ticketization`, `models.orchestrator`, `models.merge`, `models.review`)
+  - **Architecture, Spec-Generation, Final Orchestrator/Merge, and Retrospective Phases:** `"Gemini 4 Argon"` (`models.architecture`, `models.specification`, `models.ticketization`, `models.orchestrator`, `models.merge`, `models.review`, `models.retro`)
   - **Parallel Ticket Implementation & Coding Agents:** `"Gemini 4 Hydrogen"` (`models.implementation` / `subagents.models.coding`)
 - **Python Workflow Script:** `.agents/workflows/agentic-tdd-sdlc.py` (can be executed via `run_workflow` with `ScriptPath`)
 
@@ -69,6 +70,15 @@ If `.agents/workflows/agentic-tdd-sdlc.yaml` exists in the workspace, read it fi
   - Spawn two read-only review agents (`type_name="research"`, `model="Gemini 4 Argon"`) in parallel—one for **Standards**, one for **Spec**—and aggregate their reports side by side in the final `"Gemini 4 Argon"` orchestrator phase.
   - If issues are raised, resolve them via a follow-up `"Gemini 4 Hydrogen"` TDD coding agent and re-verify on the integration branch with `"Gemini 4 Argon"`.
 
+### Phase 6: Retrospective & Continuous Improvement (`retro` + `writing-for-agents`)
+
+- **Model:** `"Gemini 4 Argon"` (`workflow.run_retro: true` by default)
+- **Goal:** Analyze subagent `feedback` fields, Phase 5 review findings, git commit history, and `agy` session/subagent transcripts (`transcript.jsonl`) to surface high-leverage environment, guardrail, coding standard, and workflow/skill improvements.
+- **Skills:** Read and follow [retro](../retro/SKILL.md) and [writing-for-agents](../writing-for-agents/SKILL.md).
+- **Output:**
+  - Saves a structured, severity-ranked retrospective report to `docs/retros/<feature-slug>.md`.
+  - Presents ranked candidates to the user and **confirms with the user before applying** any edits to `AGENTS.md`, `GEMINI.md`, `.agents/rules/`, `CODING_STANDARDS.md`, `.agents/skills/`, or automated checks.
+
 ## Python Workflow Definition (`run_workflow`)
 
 When orchestrating phases programmatically via `run_workflow`, run `.agents/workflows/agentic-tdd-sdlc.py` or pass the `model` parameter explicitly to every `agent(...)` instantiation:
@@ -99,7 +109,7 @@ phase("Parallel Ticket Implementation")
 ticket_results = await parallel(
     spec_info["tickets"],
     lambda t: spawn_phase_agent(
-        prompt=f"Implement {t} following skills/tdd/SKILL.md (Red -> Green -> Refactor).",
+        prompt=f"Implement {t} following skills/tdd/SKILL.md (Red -> Green -> Refactor) and report any environment/spec friction.",
         schema={"type": "string"},
         role=f"TDD Coding Agent ({t})",
         workspace="share",
@@ -112,6 +122,14 @@ merge_summary = await spawn_phase_agent(
     prompt=f"Merge completed ticket branches ({ticket_results}), run full test suite, and complete two-axis code review.",
     schema={"type": "string"},
     role="Final Orchestrator & Merge",
+    model=ARCHITECT_MODEL,
+)
+
+phase("Retrospective & Continuous Improvement")
+retro_summary = await spawn_phase_agent(
+    prompt=f"Follow skills/retro/SKILL.md and skills/writing-for-agents/SKILL.md to write docs/retros/<slug>.md from {ticket_results} and {merge_summary}.",
+    schema={"type": "string"},
+    role="Retrospective Analyst",
     model=ARCHITECT_MODEL,
 )
 ```

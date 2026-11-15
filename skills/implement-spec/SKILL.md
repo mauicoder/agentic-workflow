@@ -72,7 +72,7 @@ results = await parallel(
 - Each implementer subagent prompt must include:
   1. Pointer to the spec (`docs/specs/<feature-slug>.md`) and its assigned ticket (`docs/tickets/<feature-slug>/<NN>-<ticket-slug>.md`).
   2. Instruction to read and strictly follow `.agents/skills/tdd/SKILL.md` (or `skills/tdd/SKILL.md`) for the **Red → Green → Refactor** loop.
-  3. Instruction to work on branch `feat/<feature-slug>-<NN>` based off `feat/<feature-slug>`, commit its passing tests and implementation, and report the branch name and test command output when finished.
+  3. Instruction to work on branch `feat/<feature-slug>-<NN>` based off `feat/<feature-slug>`, commit its passing tests and implementation, and report the branch name, test command output, and any environment, tooling, or spec/ticket friction (`feedback`) when finished.
 
 ### 5. Merge Completed Tickets & Advance the Frontier (`Gemini 4 Argon`)
 
@@ -86,7 +86,8 @@ Use `"Gemini 4 Argon"` for the orchestrator/merge phase as each implementer suba
 - Once all tickets in the DAG have reached `done` and are merged into `feat/<feature-slug>`, read and execute `.agents/skills/code-review/SKILL.md` (or `skills/code-review/SKILL.md`) using `model="Gemini 4 Argon"` comparing `feat/<feature-slug>` against the base branch (`main` or `master`).
 - If the review identifies spec gaps or standards violations, resolve them using a follow-up TDD coding subagent (`model="Gemini 4 Hydrogen"`) and re-verify integration with `"Gemini 4 Argon"`.
 
-### 7. Finalize
+### 7. Run Retrospective & Finalize (`retro`)
 
+- If `workflow.run_retro` is enabled (default `true`), read and execute `.agents/skills/retro/SKILL.md` (or `skills/retro/SKILL.md`) using `model="Gemini 4 Argon"` to analyze subagent `feedback`, review findings, and transcripts, saving the report to `docs/retros/<feature-slug>.md` and presenting ranked improvement candidates to the user before mutating any steering files or checks.
 - If the repository workflow or user requested a Pull Request, open or mark the PR ready for review.
-- Report a concise summary of completed tickets, test results, and the integration branch `feat/<feature-slug>`.
+- Report a concise summary of completed tickets, test results, retrospective candidates (`docs/retros/<feature-slug>.md`), and the integration branch `feat/<feature-slug>`.

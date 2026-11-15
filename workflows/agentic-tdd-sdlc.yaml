@@ -1,4 +1,4 @@
-version: "1.1"
+version: "1.2"
 project:
   name: "agentic-workflow-orchestrator"
 
@@ -6,6 +6,7 @@ tracker:
   mode: "local" # Options: "local", "github", "gitlab", "linear"
   specs_dir: "docs/specs"
   tickets_dir: "docs/tickets"
+  retros_dir: "docs/retros"
   default_label: "ready-for-agent"
 
 models:
@@ -16,9 +17,11 @@ models:
   orchestrator: "Gemini 4 Argon"
   merge: "Gemini 4 Argon"
   review: "Gemini 4 Argon"
+  retro: "Gemini 4 Argon"
 
 workflow:
   script: ".agents/workflows/agentic-tdd-sdlc.py"
+  run_retro: true
   phases:
     - name: "refinement"
       command: "/grill-me"
@@ -48,17 +51,26 @@ workflow:
       axes:
         - "standards"
         - "spec"
+    - name: "retro"
+      skill: "retro"
+      writing_skill: "writing-for-agents"
+      model: "Gemini 4 Argon"
+      enabled: true
+      output: "docs/retros/<feature-slug>.md"
+      description: "Post-run retrospective analyzing subagent feedback, review findings, and transcripts to recommend environment and workflow improvements."
 
 orchestration:
   approach: "tdd-contract-first"
   orchestrator_model: "Gemini 4 Argon"
   coding_model: "Gemini 4 Hydrogen"
+  retro_model: "Gemini 4 Argon"
   rules:
     - "Write shared interface contracts as root dependencies before implementation."
     - "Strictly enforce Red-Green-Refactor TDD cycle (Red -> Green -> Refactor) for every subagent task."
     - "Isolate parallel modules using interface stubs or mocks until integration."
-    - "Use Gemini 4 Argon for initial architecture, spec-generation, and final orchestrator/merge phases."
+    - "Use Gemini 4 Argon for initial architecture, spec-generation, final orchestrator/merge, and retrospective phases."
     - "Use Gemini 4 Hydrogen for parallel ticket implementation and coding agents."
+    - "Collect structured subagent feedback and confirm with the user before applying retrospective changes to steering files, skills, or checks."
 
 subagents:
   max_parallel: 3
@@ -69,3 +81,4 @@ subagents:
     spec_generator: "Gemini 4 Argon"
     coding: "Gemini 4 Hydrogen"
     orchestrator: "Gemini 4 Argon"
+    retro: "Gemini 4 Argon"

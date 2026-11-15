@@ -1,7 +1,7 @@
 """Multi-model Agentic TDD SDLC workflow script for Antigravity (agy).
 
 Phase model assignments:
-1. Initial architecture, spec-generation, and final orchestrator/merge phases:
+1. Initial architecture, spec-generation, final orchestrator/merge, and retrospective phases:
    "Gemini 4 Argon"
 2. Parallel ticket implementation and coding agents:
    "Gemini 4 Hydrogen"
@@ -10,6 +10,7 @@ Phase model assignments:
 DEFAULT_ARCHITECT_MODEL = "Gemini 4 Argon"
 DEFAULT_SPEC_MODEL = "Gemini 4 Argon"
 DEFAULT_ORCHESTRATOR_MODEL = "Gemini 4 Argon"
+DEFAULT_RETRO_MODEL = "Gemini 4 Argon"
 DEFAULT_CODING_MODEL = "Gemini 4 Hydrogen"
 
 workflow_args = globals().get("args") or {}
@@ -19,6 +20,9 @@ requirements = workflow_args.get("requirements", "")
 base_branch = workflow_args.get("base_branch", "main")
 workspace_mode = workflow_args.get("workspace_mode", "share")
 max_parallel = int(workflow_args.get("max_parallel", 3))
+existing_spec_path = workflow_args.get("spec_path")
+existing_waves = workflow_args.get("waves")
+run_retro = bool(workflow_args.get("run_retro", True))
 
 architecture_model = workflow_args.get(
     "architecture_model", DEFAULT_ARCHITECT_MODEL
@@ -32,6 +36,7 @@ orchestrator_model = workflow_args.get(
     "orchestrator_model",
     workflow_args.get("merge_model", DEFAULT_ORCHESTRATOR_MODEL),
 )
+retro_model = workflow_args.get("retro_model", DEFAULT_RETRO_MODEL)
 
 
 def instantiate_agent(
@@ -129,7 +134,8 @@ def create_ticket_coding_agent(
             f"Implement ticket '{ticket_path}' for spec '{spec_path}'.\n"
             "Read and strictly follow skills/tdd/SKILL.md (Red -> Green -> Refactor).\n"
             f"Work on a dedicated ticket branch off feat/{slug}, commit all passing tests and code, "
-            "and return your branch name, ticket path, and test verification summary."
+            "and return your branch name, ticket path, test verification summary, and any environment, "
+            "tooling, test harness, or spec/ticket ambiguity friction in 'feedback'."
         ),
         schema={
             "type": "object",
@@ -138,8 +144,12 @@ def create_ticket_coding_agent(
                 "branch": {"type": "string"},
                 "tests_passed": {"type": "boolean"},
                 "summary": {"type": "string"},
+                "feedback": {
+                    "type": "string",
+                    "description": "Friction, missing context, tool bottlenecks, or spec/ticket ambiguities encountered during implementation.",
+                },
             },
-            "required": ["ticket", "branch", "tests_passed", "summary"],
+            "required": ["ticket", "branch", "tests_passed", "summary", "feedback"],
         },
         role=f"TDD Coding Agent ({ticket_path})",
         type_name="self",
@@ -190,7 +200,8 @@ async def run_parallel_ticket_implementation(
                 prompt=(
                     f"Merge the completed ticket branches for Wave {wave_index} into integration branch 'feat/{slug}':\n"
                     f"Completed tickets: {batch_results}\n"
-                    "Verify the integration test suite passes cleanly and mark each merged ticket as 'done'."
+                    "Verify the integration test suite passes cleanly, mark each merged ticket as 'done', "
+                    "and record any merge conflicts, overlapping ticket boundaries, or test suite friction in 'feedback'."
                 ),
                 schema={
                     "type": "object",
@@ -200,8 +211,16 @@ async def run_parallel_ticket_implementation(
                             "items": {"type": "string"},
                         },
                         "integration_tests_passed": {"type": "boolean"},
+                        "feedback": {
+                            "type": "string",
+                            "description": "Merge conflicts, ticket boundary collisions, or integration test issues observed.",
+                        },
                     },
-                    "required": ["merged_branches", "integration_tests_passed"],
+                    "required": [
+                        "merged_branches",
+                        "integration_tests_passed",
+                        "feedback",
+                    ],
                 },
                 role=f"Wave {wave_index} Orchestrator Merge ({slug})",
                 type_name="self",
@@ -249,7 +268,8 @@ async def run_final_orchestrator_and_merge_phase(
             f"Standards review report:\n{review_reports[0]}\n\n"
             f"Spec review report:\n{review_reports[1]}\n\n"
             "Ensure all ticket branches are cleanly merged, full test suites pass, "
-            "and produce the final orchestrator summary."
+            "and produce the final orchestrator summary along with consolidated 'feedback' "
+            "on any review fixes, integration issues, or workflow bottlenecks."
         ),
         schema={
             "type": "object",
@@ -259,6 +279,10 @@ async def run_final_orchestrator_and_merge_phase(
                 "standards_review": {"type": "string"},
                 "spec_review": {"type": "string"},
                 "summary": {"type": "string"},
+                "feedback": {
+                    "type": "string",
+                    "description": "Consolidated orchestrator and review friction or improvement observations.",
+                },
             },
             "required": [
                 "integration_branch",
@@ -266,6 +290,7 @@ async def run_final_orchestrator_and_merge_phase(
                 "standards_review",
                 "spec_review",
                 "summary",
+                "feedback",
             ],
         },
         role=f"Final Orchestrator & Merge ({slug})",
@@ -276,17 +301,93 @@ async def run_final_orchestrator_and_merge_phase(
     return await final_orchestrator
 
 
-arch_result = await run_architecture_phase(
-    slug=feature_slug,
-    user_requirements=requirements,
-    model=architecture_model,
-)
+async def run_retro_phase(
+    slug,
+    spec_path,
+    implemented_tickets,
+    final_review_summary,
+    target_base_branch="main",
+    model=DEFAULT_RETRO_MODEL,
+):
+    """Phase 6: Post-workflow retrospective and continuous improvement analysis using Gemini 4 Argon."""
+    phase("Phase 6: Retrospective & Continuous Improvement")
+    log(f"Running retrospective phase for '{slug}' with model='{model}'")
 
-spec_and_tickets = await run_spec_and_tickets_phase(
-    slug=feature_slug,
-    arch_context=arch_result,
-    model=spec_model,
-)
+    retro_agent = instantiate_agent(
+        prompt=(
+            f"Follow skills/retro/SKILL.md and skills/writing-for-agents/SKILL.md to conduct a retrospective for feature '{slug}'.\n"
+            f"Spec: {spec_path}\n"
+            f"Base branch: {target_base_branch}\n"
+            f"Implemented tickets & subagent feedback: {implemented_tickets}\n"
+            f"Final review & orchestrator summary: {final_review_summary}\n"
+            "1. Inspect the subagent feedback fields, Phase 5 Standards/Spec review findings, git commit history on "
+            f"'feat/{slug}', and session/subagent transcripts (`transcript.jsonl`) if accessible.\n"
+            "2. Identify severity-ranked improvement candidates across Navigation, Automated Checks, Coding Standards, "
+            "Global/Workspace Steering, Multi-Agent Workflow & Skill Tuning, Tool Economy, No-ops, and Information Access.\n"
+            f"3. Save the structured retrospective report to docs/retros/{slug}.md.\n"
+            "4. Do NOT auto-apply changes to steering files, skills, or checks—return the report path and ranked "
+            "candidates so the user can review and confirm which improvements to apply."
+        ),
+        schema={
+            "type": "object",
+            "properties": {
+                "retro_path": {"type": "string"},
+                "candidates": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "severity": {
+                                "type": "string",
+                                "enum": ["high", "medium", "low"],
+                            },
+                            "category": {"type": "string"},
+                            "target": {"type": "string"},
+                            "proposal": {"type": "string"},
+                            "evidence": {"type": "string"},
+                        },
+                        "required": [
+                            "severity",
+                            "category",
+                            "target",
+                            "proposal",
+                            "evidence",
+                        ],
+                    },
+                },
+                "summary": {"type": "string"},
+            },
+            "required": ["retro_path", "candidates", "summary"],
+        },
+        role=f"Retrospective Analyst ({slug})",
+        type_name="self",
+        workspace="inherit",
+        model=model,
+    )
+    return await retro_agent
+
+
+if existing_spec_path and existing_waves:
+    log(
+        f"Using existing spec '{existing_spec_path}' and {len(existing_waves)} ticket wave(s); "
+        "starting directly at Phase 4 (Parallel TDD Ticket Implementation)."
+    )
+    spec_and_tickets = {
+        "spec_path": existing_spec_path,
+        "waves": existing_waves,
+    }
+else:
+    arch_result = await run_architecture_phase(
+        slug=feature_slug,
+        user_requirements=requirements,
+        model=architecture_model,
+    )
+
+    spec_and_tickets = await run_spec_and_tickets_phase(
+        slug=feature_slug,
+        arch_context=arch_result,
+        model=spec_model,
+    )
 
 ticket_results = await run_parallel_ticket_implementation(
     slug=feature_slug,
@@ -305,6 +406,17 @@ final_summary = await run_final_orchestrator_and_merge_phase(
     target_base_branch=base_branch,
     model=orchestrator_model,
 )
+
+if run_retro:
+    retro_summary = await run_retro_phase(
+        slug=feature_slug,
+        spec_path=spec_and_tickets["spec_path"],
+        implemented_tickets=ticket_results,
+        final_review_summary=final_summary,
+        target_base_branch=base_branch,
+        model=retro_model,
+    )
+    final_summary["retro"] = retro_summary
 
 log(f"Workflow complete for '{feature_slug}': {final_summary['summary']}")
 final_summary

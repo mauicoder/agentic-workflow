@@ -14,8 +14,11 @@ mkdir -p \
     .agents/skills/implement-spec \
     .agents/skills/tdd \
     .agents/skills/code-review \
+    .agents/skills/retro \
+    .agents/skills/writing-for-agents \
     docs/specs \
-    docs/tickets
+    docs/tickets \
+    docs/retros
 
 # 2. Safe download helper function
 download_file() {
@@ -38,5 +41,8 @@ download_file "$REPO_RAW_URL/skills/to-tickets/SKILL.md" ".agents/skills/to-tick
 download_file "$REPO_RAW_URL/skills/implement-spec/SKILL.md" ".agents/skills/implement-spec/SKILL.md"
 download_file "$REPO_RAW_URL/skills/tdd/SKILL.md" ".agents/skills/tdd/SKILL.md"
 download_file "$REPO_RAW_URL/skills/code-review/SKILL.md" ".agents/skills/code-review/SKILL.md"
+download_file "$REPO_RAW_URL/skills/retro/SKILL.md" ".agents/skills/retro/SKILL.md"
+download_file "$REPO_RAW_URL/skills/writing-for-agents/SKILL.md" ".agents/skills/writing-for-agents/SKILL.md"
+download_file "$REPO_RAW_URL/skills/writing-for-agents/SKILL-MECHANICS.md" ".agents/skills/writing-for-agents/SKILL-MECHANICS.md"
 
 echo "✨ Setup complete! All orchestration configs and skills are installed in .agents/"
