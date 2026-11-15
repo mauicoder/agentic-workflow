@@ -59,16 +59,38 @@ In addition to documented repo rules, the **Standards** axis always evaluates th
 
 ### 4. Spawn Both Review Subagents in Parallel
 
-Launch two read-only subagents in parallel using `invoke_subagent` with `TypeName: "research"` (or `run_workflow` with `parallel()`):
+Launch two read-only subagents in parallel with `model="Gemini 4 Argon"` using `invoke_subagent` (`TypeName: "research"`, `Model: "Gemini 4 Argon"`) or `run_workflow` with `parallel()`:
 
-1. **Standards Reviewer (`Role: "Code Review - Standards Axis"`):**
+```python
+REVIEW_MODEL = "Gemini 4 Argon"
+
+def create_review_agent(axis, prompt, model=REVIEW_MODEL):
+    return agent(
+        prompt=prompt,
+        schema={"type": "string"},
+        role=f"Code Review - {axis} Axis",
+        type_name="research",
+        workspace="inherit",
+        model=model,
+    )
+
+reports = await parallel(
+    [
+        ("Standards", standards_prompt),
+        ("Spec", spec_prompt),
+    ],
+    lambda item: create_review_agent(item[0], item[1], model=REVIEW_MODEL),
+)
+```
+
+1. **Standards Reviewer (`Role: "Code Review - Standards Axis"`, `Model: "Gemini 4 Argon"`):**
    - Provide:
      - The exact diff command (`git diff <fixed-point>...HEAD`) and commit list.
      - Paths to all repo standards files discovered in Step 3, plus the **Baseline Smells** list above pasted in full.
    - Task instructions:
      > "Inspect `git diff <fixed-point>...HEAD`. Report per file/hunk: (a) any violation of a documented repo standard (cite the file and rule); and (b) any baseline code smell observed (name the smell and quote the relevant lines). Clearly label hard violations vs. judgement calls. Skip anything enforced by linters/formatters. Keep the report under 400 words."
 
-2. **Spec Reviewer (`Role: "Code Review - Spec Axis"`):**
+2. **Spec Reviewer (`Role: "Code Review - Spec Axis"`, `Model: "Gemini 4 Argon"`):**
    - Provide:
      - The exact diff command (`git diff <fixed-point>...HEAD`) and commit list.
      - Path to (or contents of) the specification from Step 2 (and any associated tickets under `docs/tickets/`).

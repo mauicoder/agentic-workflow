@@ -17,7 +17,9 @@ This automatically creates the `.agents/` workspace customization hierarchy (`.a
 ```text
 .
 ├── workflows/
-│   └── agentic-tdd-sdlc.yaml      # Orchestration configuration & TDD guidelines
+│   ├── agentic-tdd-sdlc.yaml      # Orchestration configuration, phase models & TDD guidelines
+│   ├── agentic-tdd-sdlc.py        # Python workflow script for multi-model run_workflow execution
+│   └── workflow.json              # Workflow metadata and Args schema (including phase model overrides)
 ├── skills/
 │   ├── agy-tdd-orchestrator/      # Core end-to-end lifecycle orchestrator skill
 │   │   └── SKILL.md
@@ -35,7 +37,7 @@ This automatically creates the `.agents/` workspace customization hierarchy (`.a
 └── README.md                      # Setup and usage guide
 ```
 
-When `setup.sh` runs in a target project, it installs these files into `.agents/workflows/agentic-tdd-sdlc.yaml` and `.agents/skills/<skill-name>/SKILL.md`, where `agy` automatically discovers them via progressive disclosure.
+When `setup.sh` runs in a target project, it installs these files into `.agents/workflows/` (`agentic-tdd-sdlc.yaml`, `agentic-tdd-sdlc.py`, `workflow.json`) and `.agents/skills/<skill-name>/SKILL.md`, where `agy` automatically discovers them via progressive disclosure.
 
 ## 📋 The Complete End-to-End Workflow
 
@@ -63,22 +65,33 @@ Use the implement-spec skill to implement the tickets with TDD subagents.
 Use the code-review skill to review the changes against main.
 ```
 
-### Key Lifecycle Phases
+### Key Lifecycle Phases & Multi-Model Orchestration
 
-1. **Requirements & Specs (`/grill-me` & `to-spec`):** Uncovers edge cases, testing seams, acceptance criteria, and domain boundaries, saving the synthesized specification to `docs/specs/<feature-slug>.md`.
-2. **Ticket Slicing (`to-tickets`):** Decomposes the spec into vertical tracer-bullet tickets under `docs/tickets/<feature-slug>/<NN>-<ticket-slug>.md` with explicit `Blocked by` edges so subagents know which interface contracts must be built first.
-3. **Parallel TDD Implementation (`implement-spec` & `tdd`):** Executes unblocked frontier tickets concurrently in isolated `agy` subagent workspaces (`Workspace: "share"`), enforcing a strict **Red → Green → Refactor** loop:
+The workflow uses multi-model orchestration per phase, explicitly passing `model` to every agent instantiation:
+
+| Phase | Skills / Commands | Default Model | Responsibility |
+| :--- | :--- | :--- | :--- |
+| **1. Architecture & Refinement** | `/grill-me` | `Gemini 4 Argon` | Stress-test requirements, uncover edge cases, and align on architecture boundaries. |
+| **2. Specification Synthesis** | `to-spec` | `Gemini 4 Argon` | Synthesize refined architecture and testing seams into `docs/specs/<feature-slug>.md`. |
+| **3. Ticket DAG Slicing** | `to-tickets` | `Gemini 4 Argon` | Decompose the spec into vertical tracer-bullet tickets with explicit `Blocked by` edges. |
+| **4. Parallel TDD Implementation** | `implement-spec` + `tdd` | `Gemini 4 Hydrogen` | Execute unblocked frontier tickets in parallel isolated workspaces (`Red → Green → Refactor`). |
+| **5. Final Orchestrator, Merge & Review** | `implement-spec` + `code-review` | `Gemini 4 Argon` | Merge ticket branches into `feat/<feature-slug>`, verify integration tests, and run two-axis code review. |
+
+1. **Requirements & Specs (`/grill-me` & `to-spec` — `Gemini 4 Argon`):** Uncovers edge cases, testing seams, acceptance criteria, and domain boundaries, saving the synthesized specification to `docs/specs/<feature-slug>.md`.
+2. **Ticket Slicing (`to-tickets` — `Gemini 4 Argon`):** Decomposes the spec into vertical tracer-bullet tickets under `docs/tickets/<feature-slug>/<NN>-<ticket-slug>.md` with explicit `Blocked by` edges so subagents know which interface contracts must be built first.
+3. **Parallel TDD Implementation (`implement-spec` & `tdd` — `Gemini 4 Hydrogen`):** Executes unblocked frontier tickets concurrently in isolated `agy` subagent workspaces (`Workspace: "share"`, `model="Gemini 4 Hydrogen"`), enforcing a strict **Red → Green → Refactor** loop:
    - **Red:** Write a failing behavioral test against the target seam or contract.
    - **Green:** Write the minimum production code required to make the test pass.
    - **Refactor:** Clean up duplication and code smells while keeping all tests green.
-4. **Two-Axis Code Review (`code-review`):** Spawns two parallel read-only `research` subagents to evaluate the branch diff against:
+4. **Final Orchestrator Merge & Two-Axis Code Review (`code-review` — `Gemini 4 Argon`):** Merges completed ticket branches into the integration branch and spawns two parallel read-only `research` subagents (`model="Gemini 4 Argon"`) to evaluate the branch diff against:
    - **Standards:** Documented project conventions plus Fowler's refactoring code-smell baseline.
    - **Spec:** Completeness, behavioral accuracy, and zero scope creep relative to the originating spec.
 
 ## ⚙️ Customization
 
-Edit `.agents/workflows/agentic-tdd-sdlc.yaml` (or [workflows/agentic-tdd-sdlc.yaml](file:///Users/maui/StudioProjects/agentic-workflow/workflows/agentic-tdd-sdlc.yaml) in this template) per project to adjust:
+Edit `.agents/workflows/agentic-tdd-sdlc.yaml` (or [workflows/agentic-tdd-sdlc.yaml](file:///Users/maui/StudioProjects/agentic-workflow/workflows/agentic-tdd-sdlc.yaml) in this template) and `.agents/workflows/agentic-tdd-sdlc.py` per project to adjust:
 - `tracker.mode`: `"local"` (default markdown files in `docs/specs/` and `docs/tickets/`) or external issue trackers (`"github"`, `"gitlab"`, `"linear"`).
+- `models`: Per-phase model configuration (`architecture`, `specification`, `ticketization`, `orchestrator`, `merge`, `review` defaulting to `"Gemini 4 Argon"`; `implementation` / `subagents.models.coding` defaulting to `"Gemini 4 Hydrogen"`).
 - `subagents.max_parallel`: Maximum concurrent TDD implementer subagents (default: `3`).
 - `subagents.workspace_mode`: Subagent workspace isolation mode (`"share"` or `"branch"`).
 

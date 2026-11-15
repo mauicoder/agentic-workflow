@@ -28,8 +28,10 @@ download_file() {
     fi
 }
 
-# 3. Pull workflow configuration and skills
+# 3. Pull workflow configuration, Python workflow definitions, and skills
 download_file "$REPO_RAW_URL/workflows/agentic-tdd-sdlc.yaml" ".agents/workflows/agentic-tdd-sdlc.yaml"
+download_file "$REPO_RAW_URL/workflows/agentic-tdd-sdlc.py" ".agents/workflows/agentic-tdd-sdlc.py"
+download_file "$REPO_RAW_URL/workflows/workflow.json" ".agents/workflows/workflow.json"
 download_file "$REPO_RAW_URL/skills/agy-tdd-orchestrator/SKILL.md" ".agents/skills/agy-tdd-orchestrator/SKILL.md"
 download_file "$REPO_RAW_URL/skills/to-spec/SKILL.md" ".agents/skills/to-spec/SKILL.md"
 download_file "$REPO_RAW_URL/skills/to-tickets/SKILL.md" ".agents/skills/to-tickets/SKILL.md"

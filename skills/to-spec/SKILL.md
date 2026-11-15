@@ -14,6 +14,7 @@ This skill takes the current conversation context and codebase understanding and
 ## Tracker & Storage Resolution
 
 Check `.agents/workflows/agentic-tdd-sdlc.yaml` if present, or follow the user's explicit instruction:
+- **Phase Model:** `"Gemini 4 Argon"` (`models.specification`) — pass `model="Gemini 4 Argon"` explicitly when invoking spec-generation agents via `run_workflow` or `invoke_subagent`.
 - **Local mode (default):** Write the specification to `docs/specs/<feature-slug>.md`.
 - **External tracker (`github`, `gitlab`, `linear`):** Publish the specification to the project issue tracker and apply the `ready-for-agent` triage label.
 

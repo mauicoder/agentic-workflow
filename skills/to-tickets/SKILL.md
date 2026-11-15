@@ -14,6 +14,7 @@ Break a specification, plan, or conversation into a set of **tickets**: tracer-b
 ## Tracker & Storage Resolution
 
 Check `.agents/workflows/agentic-tdd-sdlc.yaml` if present, or follow the user's explicit instruction:
+- **Phase Model:** `"Gemini 4 Argon"` (`models.ticketization`) — pass `model="Gemini 4 Argon"` explicitly when invoking ticketization/architecture slicing agents via `run_workflow` or `invoke_subagent`.
 - **Local mode (default):** Write one file per ticket under `docs/tickets/<feature-slug>/<NN>-<ticket-slug>.md`, numbered from `01` in dependency order (blockers first).
 - **External tracker (`github`, `gitlab`, `linear`):** Publish one issue per ticket in dependency order and wire native blocking relationships (or list blockers in `Blocked by`). Apply the `ready-for-agent` label.
 

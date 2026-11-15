@@ -1,0 +1,65 @@
+{
+  "name": "agentic-tdd-sdlc",
+  "description": "Multi-model Agentic TDD SDLC workflow using Gemini 4 Argon for architecture, spec-generation, and final orchestrator/merge phases, and Gemini 4 Hydrogen for parallel ticket implementation and coding agents.",
+  "entry": "agentic-tdd-sdlc.py",
+  "args": {
+    "type": "object",
+    "properties": {
+      "feature_slug": {
+        "type": "string",
+        "description": "Short kebab-case identifier for the feature (e.g., 'auth-flow').",
+        "default": "feature"
+      },
+      "requirements": {
+        "type": "string",
+        "description": "Initial feature requirements, problem description, or architecture notes.",
+        "default": ""
+      },
+      "base_branch": {
+        "type": "string",
+        "description": "Base git branch to compare and integrate against.",
+        "default": "main"
+      },
+      "workspace_mode": {
+        "type": "string",
+        "enum": ["share", "branch", "inherit"],
+        "default": "share"
+      },
+      "max_parallel": {
+        "type": "integer",
+        "default": 3
+      },
+      "architecture_model": {
+        "type": "string",
+        "description": "Model used for initial architecture and requirement refinement.",
+        "default": "Gemini 4 Argon"
+      },
+      "spec_model": {
+        "type": "string",
+        "description": "Model used for spec-generation (to-spec) and ticket DAG slicing (to-tickets).",
+        "default": "Gemini 4 Argon"
+      },
+      "coding_model": {
+        "type": "string",
+        "description": "Model used for parallel ticket implementation and TDD coding agents.",
+        "default": "Gemini 4 Hydrogen"
+      },
+      "implementation_model": {
+        "type": "string",
+        "description": "Alias for coding_model used by parallel ticket implementation agents.",
+        "default": "Gemini 4 Hydrogen"
+      },
+      "orchestrator_model": {
+        "type": "string",
+        "description": "Model used for final orchestrator, branch merge, and two-axis review phases.",
+        "default": "Gemini 4 Argon"
+      },
+      "merge_model": {
+        "type": "string",
+        "description": "Alias for orchestrator_model used during ticket branch merges.",
+        "default": "Gemini 4 Argon"
+      }
+    },
+    "additionalProperties": true
+  }
+}

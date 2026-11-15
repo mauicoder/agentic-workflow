@@ -15,11 +15,14 @@ Implement an entire specification and its associated ticket graph on an **integr
 
 1. **Specification:** Locate the spec in `docs/specs/<feature-slug>.md` (or the issue tracker reference provided by the user).
 2. **Ticket Graph:** Locate the tickets in `docs/tickets/<feature-slug>/<NN>-<ticket-slug>.md` (or `.scratch/<feature-slug>/issues/`, or linked tracker sub-issues).
-3. **Workflow Config:** Check `.agents/workflows/agentic-tdd-sdlc.yaml` if present for `subagents.max_parallel` (default: `3`) and `subagents.workspace_mode` (default: `"share"`).
+3. **Workflow Config & Model Allocation:** Check `.agents/workflows/agentic-tdd-sdlc.yaml` if present for:
+   - `subagents.max_parallel` (default: `3`) and `subagents.workspace_mode` (default: `"share"`).
+   - **Parallel Ticket Implementation & Coding Agents (`models.implementation` / `subagents.models.coding`):** `"Gemini 4 Hydrogen"`
+   - **Initial Architecture / Exploration & Final Orchestrator / Merge Phases (`models.orchestrator` / `models.merge`):** `"Gemini 4 Argon"`
 
 The tickets form a **directed acyclic task graph (DAG)** with `Blocked by` edges. At any point, the **frontier** consists of all tickets with status `ready-for-agent` whose blockers are all `done`.
 
-Communicate with subagents primarily through **context pointers** (paths to the spec file, ticket file, research notes, and integration branch name) rather than pasting duplicate wall-of-text context.
+Communicate with subagents primarily through **context pointers** (paths to the spec file, ticket file, research notes, and integration branch name) rather than pasting duplicate wall-of-text context, and always pass the `model` parameter explicitly to each agent instantiation.
 
 ## Execution Steps
 
@@ -30,7 +33,7 @@ Communicate with subagents primarily through **context pointers** (paths to the 
 
 ### 2. Optional Codebase Exploration
 
-- If the tickets require shared codebase discovery (locating existing test helpers, fixtures, or architectural seams), delegate a single read-only research pass using `invoke_subagent` with `TypeName: "research"` and save concise shared notes (e.g., in `docs/tickets/<feature-slug>/research-notes.md`) so implementer subagents can start coding immediately.
+- If the tickets require shared codebase discovery (locating existing test helpers, fixtures, or architectural seams), delegate a single read-only architecture research pass using `"Gemini 4 Argon"` (`TypeName: "research"`, `Model: "Gemini 4 Argon"` or `agent(..., type_name="research", model="Gemini 4 Argon")`) and save concise shared notes (e.g., in `docs/tickets/<feature-slug>/research-notes.md`) so implementer subagents can start coding immediately.
 
 ### 3. Prepare the Integration Branch
 
@@ -39,25 +42,49 @@ Communicate with subagents primarily through **context pointers** (paths to the 
 
 ### 4. Execute Frontier Tickets in Parallel (`tdd`)
 
-For each ticket on the current **frontier** (up to `max_parallel` at a time):
+For each ticket on the current **frontier** (up to `max_parallel` at a time), instantiate coding agents with `model="Gemini 4 Hydrogen"`:
 
-- Launch an **implementer subagent** via `invoke_subagent` (`TypeName: "self"`, `Workspace: "share"`, `Role: "TDD Implementer - Ticket <NN>"`), or orchestrate the batch with `run_workflow` (`parallel(..., lambda t: agent(..., workspace="share"))`).
+- Launch an **implementer subagent** via `invoke_subagent` (`TypeName: "self"`, `Workspace: "share"`, `Model: "Gemini 4 Hydrogen"`, `Role: "TDD Implementer - Ticket <NN>"`), or orchestrate the batch with `run_workflow`:
+
+```python
+CODING_MODEL = "Gemini 4 Hydrogen"
+ORCHESTRATOR_MODEL = "Gemini 4 Argon"
+
+def create_coding_agent(ticket_path, workspace="share", model=CODING_MODEL):
+    return agent(
+        prompt=(
+            f"Implement {ticket_path} for spec docs/specs/<feature-slug>.md. "
+            "Read and strictly follow .agents/skills/tdd/SKILL.md (Red -> Green -> Refactor)."
+        ),
+        schema={"type": "string"},
+        role=f"TDD Implementer - {ticket_path}",
+        type_name="self",
+        workspace=workspace,
+        model=model,
+    )
+
+results = await parallel(
+    frontier_tickets,
+    lambda t: create_coding_agent(t, workspace="share", model=CODING_MODEL),
+)
+```
+
 - Each implementer subagent prompt must include:
   1. Pointer to the spec (`docs/specs/<feature-slug>.md`) and its assigned ticket (`docs/tickets/<feature-slug>/<NN>-<ticket-slug>.md`).
   2. Instruction to read and strictly follow `.agents/skills/tdd/SKILL.md` (or `skills/tdd/SKILL.md`) for the **Red → Green → Refactor** loop.
   3. Instruction to work on branch `feat/<feature-slug>-<NN>` based off `feat/<feature-slug>`, commit its passing tests and implementation, and report the branch name and test command output when finished.
 
-### 5. Merge Completed Tickets & Advance the Frontier
+### 5. Merge Completed Tickets & Advance the Frontier (`Gemini 4 Argon`)
 
-As each implementer subagent completes:
-1. Merge its ticket branch (`feat/<feature-slug>-<NN>`) into the integration branch (`feat/<feature-slug>`) and run the test suite to verify a clean integration.
+Use `"Gemini 4 Argon"` for the orchestrator/merge phase as each implementer subagent completes:
+1. Merge its ticket branch (`feat/<feature-slug>-<NN>`) into the integration branch (`feat/<feature-slug>`) using an orchestrator agent instantiated with `model="Gemini 4 Argon"` and run the test suite to verify a clean integration.
 2. Update the ticket's status to `**Status:** done` and check off its acceptance criteria (`[x]`) in `docs/tickets/<feature-slug>/<NN>-<ticket-slug>.md` (or close the issue on the external tracker).
-3. Recompute the **frontier**: any ticket whose `Blocked by` dependencies are now all `done` becomes unlocked. Immediately launch implementer subagents for newly unlocked tickets.
+3. Recompute the **frontier**: any ticket whose `Blocked by` dependencies are now all `done` becomes unlocked. Immediately launch implementer subagents (`model="Gemini 4 Hydrogen"`) for newly unlocked tickets.
 
 ### 6. Run Two-Axis Code Review (`code-review`)
 
-- Once all tickets in the DAG have reached `done` and are merged into `feat/<feature-slug>`, read and execute `.agents/skills/code-review/SKILL.md` (or `skills/code-review/SKILL.md`) comparing `feat/<feature-slug>` against the base branch (`main` or `master`).
-- If the review identifies spec gaps or standards violations, resolve them using a single follow-up TDD subagent and re-verify tests.
+- Once all tickets in the DAG have reached `done` and are merged into `feat/<feature-slug>`, read and execute `.agents/skills/code-review/SKILL.md` (or `skills/code-review/SKILL.md`) using `model="Gemini 4 Argon"` comparing `feat/<feature-slug>` against the base branch (`main` or `master`).
+- If the review identifies spec gaps or standards violations, resolve them using a follow-up TDD coding subagent (`model="Gemini 4 Hydrogen"`) and re-verify integration with `"Gemini 4 Argon"`.
 
 ### 7. Finalize
 

@@ -1,4 +1,4 @@
-version: "1.0"
+version: "1.1"
 project:
   name: "agentic-workflow-orchestrator"
 
@@ -8,35 +8,64 @@ tracker:
   tickets_dir: "docs/tickets"
   default_label: "ready-for-agent"
 
+models:
+  architecture: "Gemini 4 Argon"
+  specification: "Gemini 4 Argon"
+  ticketization: "Gemini 4 Argon"
+  implementation: "Gemini 4 Hydrogen"
+  orchestrator: "Gemini 4 Argon"
+  merge: "Gemini 4 Argon"
+  review: "Gemini 4 Argon"
+
 workflow:
+  script: ".agents/workflows/agentic-tdd-sdlc.py"
   phases:
     - name: "refinement"
       command: "/grill-me"
-      description: "Interactive requirements interview to resolve design decisions and edge cases."
+      model: "Gemini 4 Argon"
+      description: "Interactive architecture & requirements interview to resolve design decisions and edge cases."
     - name: "specification"
       skill: "to-spec"
+      model: "Gemini 4 Argon"
       output: "docs/specs/<feature-slug>.md"
     - name: "ticketization"
       skill: "to-tickets"
+      model: "Gemini 4 Argon"
       output: "docs/tickets/<feature-slug>/<NN>-<ticket-slug>.md"
     - name: "execution"
       skill: "implement-spec"
       tdd_skill: "tdd"
+      model: "Gemini 4 Hydrogen"
+      orchestrator_model: "Gemini 4 Argon"
       approach: "tdd-red-green-refactor"
+    - name: "merge"
+      skill: "implement-spec"
+      model: "Gemini 4 Argon"
+      description: "Final orchestrator integration, branch merge, and full test suite verification."
     - name: "review"
       skill: "code-review"
+      model: "Gemini 4 Argon"
       axes:
         - "standards"
         - "spec"
 
 orchestration:
   approach: "tdd-contract-first"
+  orchestrator_model: "Gemini 4 Argon"
+  coding_model: "Gemini 4 Hydrogen"
   rules:
     - "Write shared interface contracts as root dependencies before implementation."
     - "Strictly enforce Red-Green-Refactor TDD cycle (Red -> Green -> Refactor) for every subagent task."
     - "Isolate parallel modules using interface stubs or mocks until integration."
+    - "Use Gemini 4 Argon for initial architecture, spec-generation, and final orchestrator/merge phases."
+    - "Use Gemini 4 Hydrogen for parallel ticket implementation and coding agents."
 
 subagents:
   max_parallel: 3
   workspace_mode: "share"
   execution_mode: "dependency-graph"
+  models:
+    architect: "Gemini 4 Argon"
+    spec_generator: "Gemini 4 Argon"
+    coding: "Gemini 4 Hydrogen"
+    orchestrator: "Gemini 4 Argon"

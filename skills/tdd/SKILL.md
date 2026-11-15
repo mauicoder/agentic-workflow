@@ -10,6 +10,8 @@ description: >-
 
 Implement behavior using a strict, iterative **Red → Green → Refactor** loop. Test external behavior through public interfaces and seams rather than internal implementation details.
 
+> **Model Configuration:** Parallel ticket implementation and TDD coding agents run on `"Gemini 4 Hydrogen"` (`models.implementation` / `subagents.models.coding` in `.agents/workflows/agentic-tdd-sdlc.yaml`), with `model="Gemini 4 Hydrogen"` passed explicitly on agent instantiation.
+
 ## Core Principles
 
 1. **Test Behavior, Not Implementation:** Write tests at the highest practical seam (public API, module boundary, or service contract). Avoid coupling tests to private helpers or internal state.
